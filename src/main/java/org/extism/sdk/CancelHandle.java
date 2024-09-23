@@ -6,9 +6,9 @@ import com.sun.jna.Pointer;
  * CancelHandle is used to cancel a running Plugin
  */
 public class CancelHandle {
-    private Pointer handle;
+    private long handle;
 
-    public CancelHandle(Pointer handle) {
+    public CancelHandle(long handle) {
         this.handle = handle;
     }
 
@@ -16,6 +16,6 @@ public class CancelHandle {
      * Cancel execution of the Plugin associated with the CancelHandle
      */
     boolean cancel() {
-        return LibExtism.INSTANCE.extism_plugin_cancel(this.handle);
+        return LibExtism0.INSTANCE.extism_plugin_cancel(this.handle);
     }
 }

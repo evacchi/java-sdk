@@ -15,7 +15,7 @@ public class Plugin implements AutoCloseable {
     /**
      * Holds the Extism plugin pointer
      */
-    private final Pointer pluginPointer;
+    private final long pluginPointer;
 
     private final HostFunction[] functions;
 
@@ -28,27 +28,31 @@ public class Plugin implements AutoCloseable {
 
         Objects.requireNonNull(manifestBytes, "manifestBytes");
 
-        Pointer[] ptrArr = new Pointer[functions == null ? 0 : functions.length];
+        long[] ptrArr = new long[functions == null ? 0 : functions.length];
 
         if (functions != null)
             for (int i = 0; i < functions.length; i++) {
-               ptrArr[i] = functions[i].pointer;
+//               ptrArr[i] = functions[i].pointer;
+                throw new UnsupportedOperationException("FIXME");
             }
 
-        Pointer[] errormsg = new Pointer[1];
-        Pointer p = LibExtism.INSTANCE.extism_plugin_new(manifestBytes, manifestBytes.length,
+        long[] errormsg = new long[1];
+        long p = LibExtism0.INSTANCE.extism_plugin_new(manifestBytes, manifestBytes.length,
                 ptrArr,
                 functions == null ? 0 : functions.length,
                 withWASI,
                 errormsg);
-        if (p == null) {
+        if (p == 0) {
             if (functions != null) {
                 for (int i = 0; i < functions.length; i++) {
-                    LibExtism.INSTANCE.extism_function_free(functions[i].pointer);
+//                    LibExtism0.INSTANCE.extism_function_free(functions[i].pointer);
+                    throw new UnsupportedOperationException("FIXME");
+
                 }
             }
-            String msg = errormsg[0].getString(0);
-            LibExtism.INSTANCE.extism_plugin_new_error_free(errormsg[0]);
+//            String msg = errormsg[0].getString(0);
+            String msg = "FIXME"; //FIXME
+            LibExtism0.INSTANCE.extism_plugin_new_error_free(errormsg[0]);
             throw new ExtismException(msg);
         }
 
@@ -61,28 +65,33 @@ public class Plugin implements AutoCloseable {
 
         Objects.requireNonNull(manifestBytes, "manifestBytes");
 
-        Pointer[] ptrArr = new Pointer[functions == null ? 0 : functions.length];
+        long[] ptrArr = new long[functions == null ? 0 : functions.length];
 
         if (functions != null)
             for (int i = 0; i < functions.length; i++) {
-               ptrArr[i] = functions[i].pointer;
+//               ptrArr[i] = functions[i].pointer;
+                throw new UnsupportedOperationException("FIXME");
+
             }
 
-        Pointer[] errormsg = new Pointer[1];
-        Pointer p = LibExtism.INSTANCE.extism_plugin_new_with_fuel_limit(manifestBytes, manifestBytes.length,
+        long[] errormsg = new long[1];
+        long p = LibExtism0.INSTANCE.extism_plugin_new_with_fuel_limit(manifestBytes, manifestBytes.length,
                 ptrArr,
                 functions == null ? 0 : functions.length,
                 withWASI,
                 fuelLimit,
                 errormsg);
-        if (p == null) {
+        if (p == 0) {
             if (functions != null) {
                 for (int i = 0; i < functions.length; i++) {
-                    LibExtism.INSTANCE.extism_function_free(functions[i].pointer);
+//                    LibExtism0.INSTANCE.extism_function_free(functions[i].pointer);
+                    throw new UnsupportedOperationException("FIXME");
+
                 }
             }
-            String msg = errormsg[0].getString(0);
-            LibExtism.INSTANCE.extism_plugin_new_error_free(errormsg[0]);
+//            String msg = errormsg[0].getString(0);
+            String msg = "FIXME"; //FIXME
+            LibExtism0.INSTANCE.extism_plugin_new_error_free(errormsg[0]);
             throw new ExtismException(msg);
         }
 
@@ -117,15 +126,14 @@ public class Plugin implements AutoCloseable {
         Objects.requireNonNull(functionName, "functionName");
 
         int inputDataLength = inputData == null ? 0 : inputData.length;
-        int exitCode = LibExtism.INSTANCE.extism_plugin_call(this.pluginPointer, functionName, inputData, inputDataLength);
+        int exitCode = LibExtism0.INSTANCE.extism_plugin_call(this.pluginPointer, functionName, inputData, inputDataLength);
         if (exitCode != 0) {
             String error = this.error();
             throw new ExtismException(error);
         }
 
-        int length = LibExtism.INSTANCE.extism_plugin_output_length(this.pluginPointer);
-        Pointer output = LibExtism.INSTANCE.extism_plugin_output_data(this.pluginPointer);
-        return output.getByteArray(0, length);
+//        int length = LibExtism0.INSTANCE.extism_plugin_output_length(this.pluginPointer);
+        return LibExtism0.INSTANCE.extism_plugin_output_data(this.pluginPointer);
     }
 
 
@@ -151,7 +159,7 @@ public class Plugin implements AutoCloseable {
      * @return the error message
      */
     protected String error() {
-        String error = LibExtism.INSTANCE.extism_plugin_error(this.pluginPointer);
+        String error = LibExtism0.INSTANCE.extism_plugin_error(this.pluginPointer);
         if (error == null){
             return new String("Unknown error encountered when running Extism plugin function");
         }
@@ -167,7 +175,7 @@ public class Plugin implements AutoCloseable {
                 this.functions[i].free();
             }
         }
-        LibExtism.INSTANCE.extism_plugin_free(this.pluginPointer);
+        LibExtism0.INSTANCE.extism_plugin_free(this.pluginPointer);
     }
 
     /**
@@ -189,7 +197,7 @@ public class Plugin implements AutoCloseable {
      */
     public boolean updateConfig(byte[] jsonBytes) {
         Objects.requireNonNull(jsonBytes, "jsonBytes");
-        return LibExtism.INSTANCE.extism_plugin_config(this.pluginPointer, jsonBytes, jsonBytes.length);
+        return LibExtism0.INSTANCE.extism_plugin_config(this.pluginPointer, jsonBytes, jsonBytes.length);
     }
 
     /**
@@ -204,7 +212,7 @@ public class Plugin implements AutoCloseable {
      * Return a new `CancelHandle`, which can be used to cancel a running Plugin
      */
     public CancelHandle cancelHandle() {
-        Pointer handle = LibExtism.INSTANCE.extism_plugin_cancel_handle(this.pluginPointer);
+        long handle = LibExtism0.INSTANCE.extism_plugin_cancel_handle(this.pluginPointer);
         return new CancelHandle(handle);
     }
 }

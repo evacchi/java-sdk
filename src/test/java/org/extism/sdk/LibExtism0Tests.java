@@ -75,14 +75,14 @@ public class LibExtism0Tests {
 
     @Test
     public void test_extism_plugin_output_data() {
-        assertEquals(0, LibExtism0.INSTANCE.extism_plugin_output_data(0));
+        assertNull(LibExtism0.INSTANCE.extism_plugin_output_data(0));
     }
 
     @Test
     public void test_extism_plugin_free() {
         LibExtism0.INSTANCE.extism_plugin_free(0);
     }
-    
+
     @Test
     public void test_extism_plugin_config() {
         assertTrue(LibExtism0.INSTANCE.extism_plugin_config(100, null, 0));

@@ -166,7 +166,7 @@ public class LibExtism0 {
 
      * @return
      */
-    public native long extism_plugin_output_data(long pluginPointer);
+    public native byte[] extism_plugin_output_data(long pluginPointer);
 
     /**
      * Remove a plugin from the
