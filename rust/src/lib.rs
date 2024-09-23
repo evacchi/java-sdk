@@ -1,6 +1,6 @@
 use std::{ffi::{CStr, CString}, ptr::{null, null_mut}};
 
-use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_plugin_call, extism_plugin_error, extism_plugin_new, ExtismFunction, ExtismMemoryHandle}, CurrentPlugin, Plugin};
+use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismMemoryHandle}, CurrentPlugin, Plugin};
 use jni_simple::*;
 
 /*
@@ -202,11 +202,20 @@ pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1plugin_1out
 
 #[no_mangle]
 pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1plugin_1output_1data(
-    _env: JNIEnv,
+    env: JNIEnv,
     _this: jobject,
-    _plugin_ptr: jlong,
-) -> jlong {
-    return 0;
+    plugin_ptr: jlong,
+) -> jbyteArray {
+    let p = plugin_ptr as *mut Plugin;
+    let res = extism_plugin_output_data(p);
+    let len = extism_plugin_output_length(p);
+    if len == 0 {
+      return null_mut();
+    };
+    let arr = env.NewByteArray(len as jsize);
+    env.SetByteArrayRegion(arr, 0, len as jsize, res as *const i8);
+
+    return arr;
 }
 
 /*
