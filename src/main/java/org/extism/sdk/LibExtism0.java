@@ -64,15 +64,17 @@ public class LibExtism0 {
 //        }
 //    }
 //
-//    public native long extism_function_new(String name,
-//                                int[] inputs,
-//                                int nInputs,
-//                                int[] outputs,
-//                                int nOutputs,
-//                                InternalExtismFunction func,
-//                                long userData,
-//                                long freeUserData);
-//
+
+    // TODO
+    public long extism_function_new(String name,
+                                int[] inputs,
+                                int nInputs,
+                                int[] outputs,
+                                int nOutputs,
+                                Object func,
+                                long userData,
+                                long freeUserData) { return -1; }
+
     public native void extism_function_free(long function);
 
 
