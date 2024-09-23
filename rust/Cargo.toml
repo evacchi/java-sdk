@@ -1,0 +1,10 @@
+[package]
+name = "extism4j"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+jni-simple = "0.1.9"
+
+[lib]
+crate-type = ["cdylib"]
