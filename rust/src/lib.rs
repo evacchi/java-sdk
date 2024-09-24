@@ -2,7 +2,7 @@ use core::slice;
 use std::{ffi::{c_void, CStr, CString}, io::stdout, ptr::{null, null_mut}, thread::{self, panicking}, time::Duration};
 
 use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_function_new, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_new_with_fuel_limit, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismFunctionType, ExtismMemoryHandle, ExtismVal, Size}, CurrentPlugin, Function, Plugin, UserData, ValType};
-use jni_simple::{JNI_GetCreatedJavaVMs, *};
+use jni_simple::{ *};
 
 
 
@@ -106,24 +106,18 @@ extern "C"  fn nop(
     unsafe {
     use std::io::Write; // <--- bring the trait into scope
 
-    thread::spawn(|| {
-        thread::sleep(Duration::from_millis(2000));
 
-        //This can be done anywhere in the application at any time.
-        let vms : JavaVM = jni_simple::JNI_GetCreatedJavaVMs().unwrap() // error code is once again a jint.
-            .first().unwrap().clone(); //There can only be one JavaVM per process as per oracle spec.
+    // let mut buf : [*mut c_void; 64] = [null_mut(); 64];
+    // let mut count : jint = 0;
+    // let res = JNI_GetCreatedJavaVMs(buf.as_mut_ptr() as *mut c_void, 64, &mut count);
+    // if res != JNI_OK {
+    //     panic!("NOOO")
+    // }
 
-        //You could also provide a thread name or thread group here.
-        let mut n = JavaVMAttachArgs::new(JNI_VERSION_1_8, null(), null_mut());
-        vms.AttachCurrentThread(&mut n).unwrap();
-        let env = vms.GetEnv(JNI_VERSION_1_8).unwrap();
-        let sys = env.FindClass_str("java/lang/System");
-        let nano_time = env.GetStaticMethodID_str(sys, "nanoTime", "()J");
-        let nanos = env.CallStaticLongMethodA(sys, nano_time, null());
-        println!("RUST thread delayed: Java_org_example_JNITest_test {}", nanos);
-        stdout().flush().unwrap();
-        vms.DetachCurrentThread();
-    });
+    if is_jvm_loaded() {
+        panic!("OK")
+    }
+    
 
 
     return;
