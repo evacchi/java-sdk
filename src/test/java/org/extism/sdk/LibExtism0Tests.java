@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class LibExtism0Tests {
+class LibExtism0Tests_ {
     @Test
     public void test_free() {
         LibExtism0.INSTANCE.extism_function_free(100);

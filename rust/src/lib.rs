@@ -1,12 +1,38 @@
 use core::slice;
-use std::{ffi::{CStr, CString}, ptr::{null, null_mut}};
+use std::{ffi::{c_void, CStr, CString}, io::stdout, ptr::{null, null_mut}, thread::{self, panicking}, time::Duration};
 
-use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_function_new, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_new_with_fuel_limit, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismFunctionType, ExtismMemoryHandle, ExtismVal, Size}, CurrentPlugin, Plugin, ValType};
-use jni_simple::*;
+use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_function_new, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_new_with_fuel_limit, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismFunctionType, ExtismMemoryHandle, ExtismVal, Size}, CurrentPlugin, Function, Plugin, UserData, ValType};
+use jni_simple::{JNI_GetCreatedJavaVMs, *};
 
 
 
 // (JNIEnv *, jobject, jstring, jintArray, jint, jintArray, jint, jobject, jobject, jlong);
+
+#[no_mangle]
+pub unsafe extern "system" fn JNI_OnLoad(vm: JavaVM, _reserved: *mut c_void) -> jint {
+
+    use std::io::Write; // <--- bring the trait into scope
+
+    //Optional: Only needed if you need to spawn "rust" threads that need to interact with the JVM.
+    jni_simple::init_dynamic_link(JNI_CreateJavaVM as *mut c_void, JNI_GetCreatedJavaVMs as *mut c_void);
+
+    //All error codes are jint, never JNI_OK. See JNI documentation for their meaning when you handle them.
+    //This is a Result<JNIEnv, jint>.
+    let env : JNIEnv = vm.GetEnv(JNI_VERSION_1_8).unwrap();
+
+
+    //This code does not check for failure or exceptions checks or "checks" for success in general.
+    let sys = env.FindClass_str("java/lang/System");
+    let nano_time = env.GetStaticMethodID_str(sys, "nanoTime", "()J");
+    let nanos = env.CallStaticLongMethodA(sys, nano_time, null());
+    println!("RUST: JNI_OnLoad {}", nanos);
+    stdout().flush().unwrap();
+
+    return JNI_VERSION_1_8;
+}
+
+
+
 
 #[no_mangle]
 pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1function_1new(
@@ -38,6 +64,13 @@ pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1function_1n
     let method_id = env.GetMethodID_str(clazz, "invoke", "(J[JI[JIJ)V");
     // env.CallVoidMethodA(callback, method_id, [].as_ptr());
 
+    // let f = Function::new(
+    //     CStr::from_ptr(env.GetStringUTFChars(name, null_mut())).to_str().unwrap(), 
+    //     ins, outs, UserData::new(user_data_ptr), |p, ins, outs, data| { Ok(()) });
+
+
+        
+    // Box::into_raw(Box::new(ExtismFunction(std::cell::Cell::new(Some(f)))))
 
 
 
@@ -62,14 +95,40 @@ fn conv(i:i32) -> ValType {
   }
 }
 
-extern "C" fn nop(
+extern "C"  fn nop(
   plugin: *mut CurrentPlugin,
   inputs: *const ExtismVal,
   n_inputs: Size,
   outputs: *mut ExtismVal,
   n_outputs: Size,
   data: *mut std::ffi::c_void,
-) {}
+)  {
+    unsafe {
+    use std::io::Write; // <--- bring the trait into scope
+
+    thread::spawn(|| {
+        thread::sleep(Duration::from_millis(2000));
+
+        //This can be done anywhere in the application at any time.
+        let vms : JavaVM = jni_simple::JNI_GetCreatedJavaVMs().unwrap() // error code is once again a jint.
+            .first().unwrap().clone(); //There can only be one JavaVM per process as per oracle spec.
+
+        //You could also provide a thread name or thread group here.
+        let mut n = JavaVMAttachArgs::new(JNI_VERSION_1_8, null(), null_mut());
+        vms.AttachCurrentThread(&mut n).unwrap();
+        let env = vms.GetEnv(JNI_VERSION_1_8).unwrap();
+        let sys = env.FindClass_str("java/lang/System");
+        let nano_time = env.GetStaticMethodID_str(sys, "nanoTime", "()J");
+        let nanos = env.CallStaticLongMethodA(sys, nano_time, null());
+        println!("RUST thread delayed: Java_org_example_JNITest_test {}", nanos);
+        stdout().flush().unwrap();
+        vms.DetachCurrentThread();
+    });
+
+
+    return;
+    }
+}
 
 /*
  * Class:     org_extism_sdk_LibExtism0

@@ -96,12 +96,60 @@ public class HostFunction<T extends HostUserData> {
 
         @Override
         public void invoke(long currentPlugin, long[] ins, int nInputs, long[] outs, int nOutputs, long data) {
+
+            LibExtism.ExtismVal[] inVals = new LibExtism.ExtismVal[ins.length];
+            LibExtism.ExtismVal[] outVals = new LibExtism.ExtismVal[outs.length];
+
+            for (int i = 0; i < nInputs; i++) {
+                inVals[i] = convert(ins[i], params[i]);
+            }
+
+            for (int i = 0; i < nOutputs; i++) {
+                outVals[i] = convert(outs[i], params[i]);
+            }
+
+
             // FIXME
-//            f.invoke(new ExtismCurrentPlugin(currentPlugin), ins, outs, userData);
+            f.invoke(new ExtismCurrentPlugin(currentPlugin), inVals, outVals, userData);
 
 //            for (long output : outs) {
 //                convertOutput(output, output);
 //            }
         }
+
+        static LibExtism.ExtismVal convert(long in, LibExtism.ExtismValType param) {
+            LibExtism.ExtismVal val = new LibExtism.ExtismVal();
+            val.t = param.v;
+            val.v = new LibExtism.ExtismValUnion();
+
+            switch (param) {
+                case I32:
+                    val.v.i32= (int) in;
+                    break;
+                case PTR:
+                    // Fallthrough
+                case I64:
+                    val.v.i64= in;
+                    val.v.ptr= in;
+                    break;
+                case F32:
+                    val.v.f32 = Float.intBitsToFloat((int) in);
+                    break;
+                case F64:
+                    val.v.f64 = Double.longBitsToDouble(in);
+                    break;
+                default:
+                    throw new UnsupportedOperationException(param.name());
+//                case V128:
+//                    break;
+//                case FuncRef:
+//                    break;
+//                case ExternRef:
+//                    break;
+            }
+            return val;
+        }
+
+
     }
 }
