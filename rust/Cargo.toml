@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 extism = "1.6.0"
-jni-simple = "0.1.9"
+jni-simple = { version = "0.1.9", features = ["loadjvm"] }
 
 [lib]
 crate-type = ["cdylib"]

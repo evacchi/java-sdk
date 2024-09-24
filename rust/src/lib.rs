@@ -104,23 +104,20 @@ extern "C"  fn nop(
   data: *mut std::ffi::c_void,
 )  {
     unsafe {
-    use std::io::Write; // <--- bring the trait into scope
+        use std::io::Write; // <--- bring the trait into scope
 
+        if !is_jvm_loaded() {
+            jni_simple::load_jvm_from_java_home().expect("failed to load jvm");
+        }
 
-    // let mut buf : [*mut c_void; 64] = [null_mut(); 64];
-    // let mut count : jint = 0;
-    // let res = JNI_GetCreatedJavaVMs(buf.as_mut_ptr() as *mut c_void, 64, &mut count);
-    // if res != JNI_OK {
-    //     panic!("NOOO")
-    // }
+        let thr = JNI_GetCreatedJavaVMs().expect("failed to get jvm");
+        if thr.is_empty() {
+            //let args: Vec<String> = vec!["-Xcheck:jni".to_string()];
+            //let args: Vec<String> = vec!["-Xint".to_string()];
+            let args: Vec<String> = vec![];
 
-    if is_jvm_loaded() {
-        panic!("OK")
-    }
-    
-
-
-    return;
+            let (_, env) = JNI_CreateJavaVM_with_string_args(JNI_VERSION_1_8, &args).expect("failed to create jvm");
+        }
     }
 }
 
