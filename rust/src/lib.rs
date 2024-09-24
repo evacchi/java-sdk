@@ -1,5 +1,5 @@
 use core::slice;
-use std::{ffi::{c_void, CStr, CString}, io::stdout, ptr::{null, null_mut}, thread::{self, panicking}, time::Duration};
+use std::{cell::OnceCell, ffi::{c_void, CStr, CString}, io::stdout, ptr::{null, null_mut}, sync::OnceLock, thread::{self, panicking}, time::Duration};
 
 use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_function_new, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_new_with_fuel_limit, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismFunctionType, ExtismMemoryHandle, ExtismVal, Size}, CurrentPlugin, Function, Plugin, UserData, ValType};
 use jni_simple::{ *};
@@ -7,6 +7,8 @@ use jni_simple::{ *};
 
 
 // (JNIEnv *, jobject, jstring, jintArray, jint, jintArray, jint, jobject, jobject, jlong);
+
+static jvm: OnceLock<JavaVM> = OnceLock::new();
 
 #[no_mangle]
 pub unsafe extern "system" fn JNI_OnLoad(vm: JavaVM, _reserved: *mut c_void) -> jint {
@@ -19,6 +21,7 @@ pub unsafe extern "system" fn JNI_OnLoad(vm: JavaVM, _reserved: *mut c_void) -> 
     //All error codes are jint, never JNI_OK. See JNI documentation for their meaning when you handle them.
     //This is a Result<JNIEnv, jint>.
     let env : JNIEnv = vm.GetEnv(JNI_VERSION_1_8).unwrap();
+    jvm.set(vm);
 
 
     //This code does not check for failure or exceptions checks or "checks" for success in general.
@@ -59,6 +62,8 @@ pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1function_1n
       outs[i] = conv(*ele); 
       i+=1;
     }
+
+    let vm = env.GetJavaVM().unwrap();
 
     let clazz = env.FindClass_str("org/extism/sdk/LibExtism0$InternalExtismFunction");
     let method_id = env.GetMethodID_str(clazz, "invoke", "(J[JI[JIJ)V");
@@ -105,19 +110,13 @@ extern "C"  fn nop(
 )  {
     unsafe {
         use std::io::Write; // <--- bring the trait into scope
-
-        if !is_jvm_loaded() {
-            jni_simple::load_jvm_from_java_home().expect("failed to load jvm");
-        }
-
-        let thr = JNI_GetCreatedJavaVMs().expect("failed to get jvm");
-        if thr.is_empty() {
-            //let args: Vec<String> = vec!["-Xcheck:jni".to_string()];
-            //let args: Vec<String> = vec!["-Xint".to_string()];
-            let args: Vec<String> = vec![];
-
-            let (_, env) = JNI_CreateJavaVM_with_string_args(JNI_VERSION_1_8, &args).expect("failed to create jvm");
-        }
+        let vm = jvm.get().unwrap();
+        let env : JNIEnv = vm.GetEnv(JNI_VERSION_1_8).unwrap();
+        let sys = env.FindClass_str("java/lang/System");
+        let nano_time = env.GetStaticMethodID_str(sys, "nanoTime", "()J");
+        let nanos = env.CallStaticLongMethodA(sys, nano_time, null());
+        println!("RUST: JNI_OnLoad {}", nanos);
+        stdout().flush().unwrap();
     }
 }
 
