@@ -1,7 +1,75 @@
+use core::slice;
 use std::{ffi::{CStr, CString}, ptr::{null, null_mut}};
 
-use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismMemoryHandle}, CurrentPlugin, Plugin};
+use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_function_new, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_new_with_fuel_limit, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismFunctionType, ExtismMemoryHandle, ExtismVal, Size}, CurrentPlugin, Plugin, ValType};
 use jni_simple::*;
+
+
+
+// (JNIEnv *, jobject, jstring, jintArray, jint, jintArray, jint, jobject, jobject, jlong);
+
+#[no_mangle]
+pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1function_1new(
+  env: JNIEnv, _this: jobject, name: jstring, inputs: jintArray, n_inputs: jint, 
+  outputs: jintArray, n_outputs: jint, callback: jobject, user_data_ptr: jobject, _free_user_data: jlong) -> jlong {
+
+
+    let inputs_arr = env.GetIntArrayElements(inputs, null_mut());
+    let outputs_arr = env.GetIntArrayElements(outputs, null_mut());
+
+    let input_slice = slice::from_raw_parts(inputs_arr, n_inputs as usize);
+    let output_slice = slice::from_raw_parts(outputs_arr, n_outputs as usize);
+
+    let mut ins = vec![ValType::I32; n_inputs as usize];
+    let mut outs = vec![ValType::I32; n_outputs as usize];
+    let mut i = 0;
+    for ele in input_slice {
+        ins[i] = conv(*ele);
+        i+=1;
+    }
+
+    i=0;
+    for ele in output_slice {
+      outs[i] = conv(*ele); 
+      i+=1;
+    }
+
+    let clazz = env.FindClass_str("org/extism/sdk/LibExtism0$InternalExtismFunction");
+    let method_id = env.GetMethodID_str(clazz, "invoke", "(J[JI[JIJ)V");
+    // env.CallVoidMethodA(callback, method_id, [].as_ptr());
+
+
+
+
+    extism_function_new(
+      env.GetStringUTFChars(name, null_mut()), 
+      ins.as_mut_ptr(), n_inputs as u64, 
+      outs.as_mut_ptr(), n_outputs as u64, 
+      nop, user_data_ptr as *mut std::ffi::c_void, Option::None) as jlong
+}
+
+
+fn conv(i:i32) -> ValType {
+  match i  {
+      0 => ValType::I32,
+      1 => ValType::I64,
+      2 => ValType::F32,
+      3 => ValType::F64,
+      4 => ValType::V128,
+      5 => ValType::FuncRef,
+      6 => ValType::ExternRef,
+      _ => panic!("Unknown value")
+  }
+}
+
+extern "C" fn nop(
+  plugin: *mut CurrentPlugin,
+  inputs: *const ExtismVal,
+  n_inputs: Size,
+  outputs: *mut ExtismVal,
+  n_outputs: Size,
+  data: *mut std::ffi::c_void,
+) {}
 
 /*
  * Class:     org_extism_sdk_LibExtism0
@@ -102,7 +170,7 @@ pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1plugin_1new
 ) -> jlong {
     return extism_plugin_new(
       env.GetByteArrayElements(wasm, null_mut()) as *const u8, wasm_size as u64, 
-      function_ptrs as *mut *const ExtismFunction, n_funcs as u64, 
+      env.GetLongArrayElements(function_ptrs, null_mut()) as *mut *const ExtismFunction, n_funcs as u64, 
       wasi, errmsg as *mut*mut i8) as jlong
 }
 
@@ -113,17 +181,22 @@ pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1plugin_1new
  */
 #[no_mangle]
 pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1plugin_1new_1with_1fuel_1limit(
-    _env: JNIEnv,
+    env: JNIEnv,
     _this: jobject,
-    _wasm: jbyteArray,
-    _wasm_size: jlong,
-    _function_ptrs: jlongArray,
-    _n_funcs: jint,
-    _wasi: jboolean,
-    _fuel: jlong,
-    _errmsg: jlongArray,
+    wasm: jbyteArray,
+    wasm_size: jlong,
+    function_ptrs: jlongArray,
+    n_funcs: jint,
+    wasi: jboolean,
+    fuel: jlong,
+    errmsg: jlongArray,
 ) -> jlong {
-    return 0;
+  return extism_plugin_new_with_fuel_limit(
+    env.GetByteArrayElements(wasm, null_mut()) as *const u8, wasm_size as u64, 
+    function_ptrs as *mut *const ExtismFunction, n_funcs as u64, 
+    wasi,
+    fuel as u64,
+    errmsg as *mut*mut i8) as jlong
 }
 
 /*
@@ -189,9 +262,9 @@ pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1plugin_1cal
 pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1plugin_1output_1length(
     _env: JNIEnv,
     _this: jobject,
-    _plugin_ptr: jlong,
+    plugin_ptr: jlong,
 ) -> jint {
-    return 0;
+    return extism_plugin_output_length(plugin_ptr as *mut Plugin) as i32;
 }
 
 /*

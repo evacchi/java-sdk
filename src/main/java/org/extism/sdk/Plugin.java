@@ -32,8 +32,7 @@ public class Plugin implements AutoCloseable {
 
         if (functions != null)
             for (int i = 0; i < functions.length; i++) {
-//               ptrArr[i] = functions[i].pointer;
-                throw new UnsupportedOperationException("FIXME");
+               ptrArr[i] = functions[i].pointer;
             }
 
         long[] errormsg = new long[1];
@@ -45,9 +44,7 @@ public class Plugin implements AutoCloseable {
         if (p == 0) {
             if (functions != null) {
                 for (int i = 0; i < functions.length; i++) {
-//                    LibExtism0.INSTANCE.extism_function_free(functions[i].pointer);
-                    throw new UnsupportedOperationException("FIXME");
-
+                    LibExtism0.INSTANCE.extism_function_free(functions[i].pointer);
                 }
             }
 //            String msg = errormsg[0].getString(0);

@@ -1,25 +1,27 @@
 package org.extism.sdk;
 
-import com.sun.jna.Pointer;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class HostFunctionTests {
+    
+    long NULL_PTR = 0;
+    
     @Test
     public void callbackShouldAcceptNullParameters() {
         var callback = new HostFunction.Callback<>(
-                (plugin, params, returns, userData) -> {/* NOOP */}, null);
-        callback.invoke(Pointer.NULL, null, 0, null, 0, Pointer.NULL);
+                (plugin, params, returns, userData) -> {/* NOOP */}, new LibExtism.ExtismValType[0], new LibExtism.ExtismValType[0], null);
+        callback.invoke(NULL_PTR, null, 0, null, 0, NULL_PTR);
     }
 
     @Test
     public void callbackShouldThrowOnNullParametersAndNonzeroCounts() {
         var callback = new HostFunction.Callback<>(
-                (plugin, params, returns, userData) -> {/* NOOP */}, null);
+                (plugin, params, returns, userData) -> {/* NOOP */}, new LibExtism.ExtismValType[0], new LibExtism.ExtismValType[0], null);
         assertThrows(ExtismException.class, () ->
-                callback.invoke(Pointer.NULL, null, 1, null, 0, Pointer.NULL));
+                callback.invoke(NULL_PTR, null, 1, null, 0, NULL_PTR));
         assertThrows(ExtismException.class, () ->
-                callback.invoke(Pointer.NULL, null, 0, null, 1, Pointer.NULL));
+                callback.invoke(NULL_PTR, null, 0, null, 1, NULL_PTR));
     }
 }

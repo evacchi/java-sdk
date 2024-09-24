@@ -1,12 +1,5 @@
 package org.extism.sdk;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Union;
 
 /**
  * Wrapper around the Extism library.
@@ -19,61 +12,61 @@ public class LibExtism0 {
 
     /**
      * Holds the extism library instance.
-     * Resolves the extism library based on the resolution algorithm defined in {@link NativeLibrary}.
+     * Resolves the extism library based on the resolution algorithm defined in ...
      */
     public static LibExtism0 INSTANCE = new LibExtism0();
 
-//    interface InternalExtismFunction extends Callback {
-//        void invoke(
-//                Pointer currentPlugin,
-//                ExtismVal inputs,
-//                int nInputs,
-//                ExtismVal outputs,
-//                int nOutputs,
-//                Pointer data
-//        );
-//    }
-//
-//    class ExtismVal  {
-//        public int t;
-//        public ExtismValUnion v;
-//    }
-//    class ExtismValUnion  {
-//        public int i32;
-//        public long i64;
-//        public long ptr;
-//        public float f32;
-//        public double f64;
-//    }
-//
-//    enum ExtismValType {
-//        I32(0),
-//        I64(1),
-//        // PTR is an alias for I64
-//        PTR(1),
-//        F32(2),
-//        F64(3),
-//        V128(4),
-//        FuncRef(5),
-//        ExternRef(6);
-//
-//        public final int v;
-//
-//        ExtismValType(int value) {
-//            this.v = value;
-//        }
-//    }
-//
+    public static interface InternalExtismFunction  {
+        void invoke(
+                long currentPlugin,
+                long[] inputs,
+                int nInputs,
+                long[] outputs,
+                int nOutputs,
+                long data
+        );
+    }
+
+    public static class ExtismVal  {
+        public int t;
+        public ExtismValUnion v;
+    }
+    public static class ExtismValUnion  {
+        public int i32;
+        public long i64;
+        public long ptr;
+        public float f32;
+        public double f64;
+    }
+
+    enum ExtismValType {
+        I32(0),
+        I64(1),
+        // PTR is an alias for I64
+        PTR(1),
+        F32(2),
+        F64(3),
+        V128(4),
+        FuncRef(5),
+        ExternRef(6);
+
+        public final int v;
+
+        ExtismValType(int value) {
+            this.v = value;
+        }
+    }
+
 
     // TODO
-    public long extism_function_new(String name,
+    public native long extism_function_new(String name,
                                 int[] inputs,
                                 int nInputs,
                                 int[] outputs,
                                 int nOutputs,
-                                Object func,
-                                long userData,
-                                long freeUserData) { return -1; }
+                                InternalExtismFunction func,
+                                Object userData,
+                                long freeUserData);
 
     public native void extism_function_free(long function);
 
