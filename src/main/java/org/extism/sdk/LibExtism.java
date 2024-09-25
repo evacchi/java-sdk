@@ -126,7 +126,7 @@ public class LibExtism {
      * @return pointer to the plugin, or null in case of error
      */
     public native long extism_plugin_new(byte[] wasm, long wasmSize, long[] functions, int nFunctions, boolean withWASI, String[] errmsg);
-    public native long extism_plugin_new_with_fuel_limit(byte[] wasm, long wasmSize, long[] functions, int nFunctions, boolean withWASI, long fuelLimit, long[] errmsg);
+    public native long extism_plugin_new_with_fuel_limit(byte[] wasm, long wasmSize, long[] functions, int nFunctions, boolean withWASI, long fuelLimit, String[] errmsg);
 
 
     public native String extism_plugin_new_error_get(long errmsg);

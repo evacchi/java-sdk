@@ -24,29 +24,26 @@ public class Plugin implements AutoCloseable {
      * @param withWASI      Set to true to enable WASI
      */
     public Plugin(byte[] manifestBytes, boolean withWASI, HostFunction[] functions) {
-
         Objects.requireNonNull(manifestBytes, "manifestBytes");
+        if (functions == null) {
+            functions = new HostFunction[0];
+        }
+        long[] ptrArr = new long[functions.length];
 
-        long[] ptrArr = new long[functions == null ? 0 : functions.length];
-
-        if (functions != null)
-            for (int i = 0; i < functions.length; i++) {
-               ptrArr[i] = functions[i].pointer;
-            }
+        for (int i = 0; i < functions.length; i++) {
+            ptrArr[i] = functions[i].pointer;
+        }
 
         String[] errormsg = new String[1];
         long p = LibExtism.INSTANCE.extism_plugin_new(manifestBytes, manifestBytes.length,
                 ptrArr,
-                functions == null ? 0 : functions.length,
+                functions.length,
                 withWASI,
                 errormsg);
         if (p == 0) {
-            if (functions != null) {
-                for (int i = 0; i < functions.length; i++) {
-                    LibExtism.INSTANCE.extism_function_free(functions[i].pointer);
-                }
+            for (HostFunction function : functions) {
+                LibExtism.INSTANCE.extism_function_free(function.pointer);
             }
-//            LibExtism0.INSTANCE.extism_plugin_new_error_free();
             throw new ExtismException(errormsg[0]);
         }
 
@@ -54,35 +51,30 @@ public class Plugin implements AutoCloseable {
         this.pluginPointer = p;
     }
 
-    
+
     public Plugin(byte[] manifestBytes, boolean withWASI, HostFunction[] functions, long fuelLimit) {
-
         Objects.requireNonNull(manifestBytes, "manifestBytes");
-
         long[] ptrArr = new long[functions == null ? 0 : functions.length];
+        if (functions == null) {
+            functions = new HostFunction[0];
+        }
 
-        if (functions != null)
-            for (int i = 0; i < functions.length; i++) {
-               ptrArr[i] = functions[i].pointer;
-            }
+        for (int i = 0; i < functions.length; i++) {
+            ptrArr[i] = functions[i].pointer;
+        }
 
-        long[] errormsg = new long[1];
+        String[] errormsg = new String[1];
         long p = LibExtism.INSTANCE.extism_plugin_new_with_fuel_limit(manifestBytes, manifestBytes.length,
                 ptrArr,
-                functions == null ? 0 : functions.length,
+                functions.length,
                 withWASI,
                 fuelLimit,
                 errormsg);
         if (p == 0) {
-            if (functions != null) {
-                for (int i = 0; i < functions.length; i++) {
-                    LibExtism.INSTANCE.extism_function_free(functions[i].pointer);
-                }
+            for (HostFunction function : functions) {
+                LibExtism.INSTANCE.extism_function_free(function.pointer);
             }
-//            String msg = errormsg[0].getString(0);
-            String msg = "FIXME err init"; //FIXME
-            LibExtism.INSTANCE.extism_plugin_new_error_free(errormsg[0]);
-            throw new ExtismException(msg);
+            throw new ExtismException(errormsg[0]);
         }
 
         this.functions = functions;
@@ -112,7 +104,6 @@ public class Plugin implements AutoCloseable {
      * @throws ExtismException if the call fails
      */
     public byte[] call(String functionName, byte[] inputData) {
-
         Objects.requireNonNull(functionName, "functionName");
 
         int inputDataLength = inputData == null ? 0 : inputData.length;
@@ -122,7 +113,6 @@ public class Plugin implements AutoCloseable {
             throw new ExtismException(error);
         }
 
-//        int length = LibExtism0.INSTANCE.extism_plugin_output_length(this.pluginPointer);
         return LibExtism.INSTANCE.extism_plugin_output_data(this.pluginPointer);
     }
 
@@ -135,9 +125,7 @@ public class Plugin implements AutoCloseable {
      * @return A string representing the output data
      */
     public String call(String functionName, String input) {
-
         Objects.requireNonNull(functionName, "functionName");
-
         var inputBytes = input == null ? null : input.getBytes(StandardCharsets.UTF_8);
         var outputBytes = call(functionName, inputBytes);
         return new String(outputBytes, StandardCharsets.UTF_8);
@@ -151,7 +139,7 @@ public class Plugin implements AutoCloseable {
     protected String error() {
         String error = LibExtism.INSTANCE.extism_plugin_error(this.pluginPointer);
         if (error == null){
-            return new String("Unknown error encountered when running Extism plugin function");
+            return "Unknown error encountered when running Extism plugin function";
         }
         return error;
     }
@@ -160,10 +148,8 @@ public class Plugin implements AutoCloseable {
      * Frees a plugin from memory
      */
     public void free() {
-        if (this.functions != null){
-            for (int i = 0; i < this.functions.length; i++) {
-                this.functions[i].free();
-            }
+        for (HostFunction function : this.functions) {
+            function.free();
         }
         LibExtism.INSTANCE.extism_plugin_free(this.pluginPointer);
     }
