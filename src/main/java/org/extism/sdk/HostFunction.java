@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public class HostFunction<T extends HostUserData> {
 
-    private final LibExtism0.InternalExtismFunction callback;
+    private final LibExtism.InternalExtismFunction callback;
 
     private boolean freed;
 
@@ -24,7 +24,7 @@ public class HostFunction<T extends HostUserData> {
         this.returns = returns;
         this.callback = new Callback(f, params, returns, userData);
 
-        this.pointer = LibExtism0.INSTANCE.extism_function_new(
+        this.pointer = LibExtism.INSTANCE.extism_function_new(
                 this.name,
                 Arrays.stream(this.params).mapToInt(r -> r.v).toArray(),
                 this.params.length,
@@ -56,7 +56,7 @@ public class HostFunction<T extends HostUserData> {
 
     public void setNamespace(String name) {
         if (this.pointer != 0) {
-            LibExtism0.INSTANCE.extism_function_set_namespace(this.pointer, name);
+            LibExtism.INSTANCE.extism_function_set_namespace(this.pointer, name);
         }
     }
 
@@ -67,12 +67,12 @@ public class HostFunction<T extends HostUserData> {
 
     public void free() {
         if (!this.freed) {
-            LibExtism0.INSTANCE.extism_function_free(this.pointer);
+            LibExtism.INSTANCE.extism_function_free(this.pointer);
             this.freed = true;
         }
     }
 
-    static class Callback<T> implements LibExtism0.InternalExtismFunction {
+    static class Callback<T> implements LibExtism.InternalExtismFunction {
         private final ExtismFunction f;
         private final LibExtism.ExtismValType[] params;
         private final LibExtism.ExtismValType[] returns;
@@ -87,33 +87,39 @@ public class HostFunction<T extends HostUserData> {
 
         @Override
         public void invoke(long currentPlugin, long[] ins, int nInputs, long[] outs, int nOutputs, long data) {
+            LibExtism.ExtismVal[] inVals = checkVals(ins, nInputs, params);
+            LibExtism.ExtismVal[] outVals = checkVals(outs, nOutputs, returns);
 
-            LibExtism.ExtismVal[] inVals = new LibExtism.ExtismVal[ins.length];
-            LibExtism.ExtismVal[] outVals = null;
-            if (outs != null) {
-                outVals = new LibExtism.ExtismVal[outs.length];
-            }
-
-            for (int i = 0; i < nInputs; i++) {
-                inVals[i] = convert(ins[i], params[i]);
-            }
-
-            for (int i = 0; i < nOutputs; i++) {
-                outVals[i] = convert(outs[i], returns[i]);
-            }
-
-
-            // FIXME
             f.invoke(new ExtismCurrentPlugin(currentPlugin), inVals, outVals, userData);
 
-            for (int i = 0; i < outs.length; i++) {
-                var t = returns[i];
-                outs[i] = convertOutput(outVals[i], t);
+            for (int i = 0; i < nOutputs; i++) {
+                outs[i] = convertOutput(outVals[i], returns[i]);
             }
-            System.out.println("outvals:"+Arrays.toString(outs));
         }
 
-        static LibExtism.ExtismVal convert(long in, LibExtism.ExtismValType param) {
+        private static LibExtism.ExtismVal[] checkVals(long[] vs, int len, LibExtism.ExtismValType[] types) {
+            LibExtism.ExtismVal[] vals = null;
+
+            if (vs == null) {
+                if (len > 0) {
+                    throw new ExtismException("Output array is null but nOutputs is greater than 0");
+                }
+            } else {
+                if (len != types.length) {
+                    throw new ExtismException("Output array size does not match the expected number of result types");
+                }
+                vals = new LibExtism.ExtismVal[len];
+            }
+
+            for (int i = 0; i < len; i++) {
+                vals[i] = convert(vs[i], types[i]);
+            }
+
+
+            return vals;
+        }
+
+        private static LibExtism.ExtismVal convert(long in, LibExtism.ExtismValType param) {
             LibExtism.ExtismVal val = new LibExtism.ExtismVal();
             val.t = param.v;
             val.v = new LibExtism.ExtismValUnion();

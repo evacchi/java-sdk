@@ -18,10 +18,10 @@ public class HostFunctionTests {
     @Test
     public void callbackShouldThrowOnNullParametersAndNonzeroCounts() {
         var callback = new HostFunction.Callback<>(
-                (plugin, params, returns, userData) -> {/* NOOP */}, new LibExtism.ExtismValType[0], new LibExtism.ExtismValType[0], null);
+                (plugin, params, returns, userData) -> {/* NOOP */}, new LibExtism.ExtismValType[]{LibExtism.ExtismValType.I32}, new LibExtism.ExtismValType[]{LibExtism.ExtismValType.I32}, null);
         assertThrows(ExtismException.class, () ->
                 callback.invoke(NULL_PTR, null, 1, null, 0, NULL_PTR));
         assertThrows(ExtismException.class, () ->
-                callback.invoke(NULL_PTR, null, 0, null, 1, NULL_PTR));
+                callback.invoke(NULL_PTR, new long[0], 0, new long[1], 1, NULL_PTR));
     }
 }
