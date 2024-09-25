@@ -24,7 +24,7 @@ public class Extism {
         Objects.requireNonNull(path, "path");
         Objects.requireNonNull(level, "level");
 
-        var result = LibExtism.INSTANCE.extism_log_file(path.toString(), level.getLevel());
+        var result = LibExtism.extism_log_file(path.toString(), level.getLevel());
         if (!result) {
             var error = String.format("Could not set extism logger to %s with level %s", path, level);
             throw new ExtismException(error);

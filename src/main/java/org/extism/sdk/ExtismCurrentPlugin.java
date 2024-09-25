@@ -11,19 +11,19 @@ public class ExtismCurrentPlugin {
     }
 
     public ByteBuffer memory(long off, long n) {
-        return LibExtism.INSTANCE.extism_current_plugin_memory(this.pointer, off, n);
+        return LibExtism.extism_current_plugin_memory(this.pointer, off, n);
     }
 
     public long alloc(int n) {
-        return LibExtism.INSTANCE.extism_current_plugin_memory_alloc(this.pointer, n);
+        return LibExtism.extism_current_plugin_memory_alloc(this.pointer, n);
     }
 
     public void free(long offset) {
-        LibExtism.INSTANCE.extism_current_plugin_memory_free(this.pointer, offset);
+        LibExtism.extism_current_plugin_memory_free(this.pointer, offset);
     }
 
     public long memoryLength(long offset) {
-        return LibExtism.INSTANCE.extism_current_plugin_memory_length(this.pointer, offset);
+        return LibExtism.extism_current_plugin_memory_length(this.pointer, offset);
     }
 
     /**
@@ -54,13 +54,13 @@ public class ExtismCurrentPlugin {
     public byte[] inputBytes(LibExtism.ExtismVal input) {
         switch (input.t) {
             case 0: {
-                var len = LibExtism.INSTANCE.extism_current_plugin_memory_length(this.pointer, input.v.i32);
+                var len = LibExtism.extism_current_plugin_memory_length(this.pointer, input.v.i32);
                 byte[] bb = new byte[len];
                 this.memory(input.v.i32, len).get(bb);
                 return bb;
             }
             case 1: {
-                var len = LibExtism.INSTANCE.extism_current_plugin_memory_length(this.pointer, input.v.i64);
+                var len = LibExtism.extism_current_plugin_memory_length(this.pointer, input.v.i64);
                 byte[] bb = new byte[len];
                 this.memory(input.v.i64, len).get(bb);
                 return bb;

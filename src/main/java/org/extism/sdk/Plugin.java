@@ -35,14 +35,14 @@ public class Plugin implements AutoCloseable {
         }
 
         String[] errormsg = new String[1];
-        long p = LibExtism.INSTANCE.extism_plugin_new(manifestBytes, manifestBytes.length,
+        long p = LibExtism.extism_plugin_new(manifestBytes, manifestBytes.length,
                 ptrArr,
                 functions.length,
                 withWASI,
                 errormsg);
         if (p == 0) {
             for (HostFunction function : functions) {
-                LibExtism.INSTANCE.extism_function_free(function.pointer);
+                LibExtism.extism_function_free(function.pointer);
             }
             throw new ExtismException(errormsg[0]);
         }
@@ -64,7 +64,7 @@ public class Plugin implements AutoCloseable {
         }
 
         String[] errormsg = new String[1];
-        long p = LibExtism.INSTANCE.extism_plugin_new_with_fuel_limit(manifestBytes, manifestBytes.length,
+        long p = LibExtism.extism_plugin_new_with_fuel_limit(manifestBytes, manifestBytes.length,
                 ptrArr,
                 functions.length,
                 withWASI,
@@ -72,7 +72,7 @@ public class Plugin implements AutoCloseable {
                 errormsg);
         if (p == 0) {
             for (HostFunction function : functions) {
-                LibExtism.INSTANCE.extism_function_free(function.pointer);
+                LibExtism.extism_function_free(function.pointer);
             }
             throw new ExtismException(errormsg[0]);
         }
@@ -107,13 +107,13 @@ public class Plugin implements AutoCloseable {
         Objects.requireNonNull(functionName, "functionName");
 
         int inputDataLength = inputData == null ? 0 : inputData.length;
-        int exitCode = LibExtism.INSTANCE.extism_plugin_call(this.pluginPointer, functionName, inputData, inputDataLength);
+        int exitCode = LibExtism.extism_plugin_call(this.pluginPointer, functionName, inputData, inputDataLength);
         if (exitCode != 0) {
             String error = this.error();
             throw new ExtismException(error);
         }
 
-        return LibExtism.INSTANCE.extism_plugin_output_data(this.pluginPointer);
+        return LibExtism.extism_plugin_output_data(this.pluginPointer);
     }
 
 
@@ -137,7 +137,7 @@ public class Plugin implements AutoCloseable {
      * @return the error message
      */
     protected String error() {
-        String error = LibExtism.INSTANCE.extism_plugin_error(this.pluginPointer);
+        String error = LibExtism.extism_plugin_error(this.pluginPointer);
         if (error == null){
             return "Unknown error encountered when running Extism plugin function";
         }
@@ -151,7 +151,7 @@ public class Plugin implements AutoCloseable {
         for (HostFunction function : this.functions) {
             function.free();
         }
-        LibExtism.INSTANCE.extism_plugin_free(this.pluginPointer);
+        LibExtism.extism_plugin_free(this.pluginPointer);
     }
 
     /**
@@ -173,7 +173,7 @@ public class Plugin implements AutoCloseable {
      */
     public boolean updateConfig(byte[] jsonBytes) {
         Objects.requireNonNull(jsonBytes, "jsonBytes");
-        return LibExtism.INSTANCE.extism_plugin_config(this.pluginPointer, jsonBytes, jsonBytes.length);
+        return LibExtism.extism_plugin_config(this.pluginPointer, jsonBytes, jsonBytes.length);
     }
 
     /**
@@ -188,7 +188,7 @@ public class Plugin implements AutoCloseable {
      * Return a new `CancelHandle`, which can be used to cancel a running Plugin
      */
     public CancelHandle cancelHandle() {
-        long handle = LibExtism.INSTANCE.extism_plugin_cancel_handle(this.pluginPointer);
+        long handle = LibExtism.extism_plugin_cancel_handle(this.pluginPointer);
         return new CancelHandle(handle);
     }
 }

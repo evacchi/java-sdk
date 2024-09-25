@@ -24,7 +24,7 @@ public class HostFunction<T extends HostUserData> {
         this.returns = returns;
         this.callback = new Callback(f, params, returns, userData);
 
-        this.pointer = LibExtism.INSTANCE.extism_function_new(
+        this.pointer = LibExtism.extism_function_new(
                 this.name,
                 Arrays.stream(this.params).mapToInt(r -> r.v).toArray(),
                 this.params.length,
@@ -56,7 +56,7 @@ public class HostFunction<T extends HostUserData> {
 
     public void setNamespace(String name) {
         if (this.pointer != 0) {
-            LibExtism.INSTANCE.extism_function_set_namespace(this.pointer, name);
+            LibExtism.extism_function_set_namespace(this.pointer, name);
         }
     }
 
@@ -67,7 +67,7 @@ public class HostFunction<T extends HostUserData> {
 
     public void free() {
         if (!this.freed) {
-            LibExtism.INSTANCE.extism_function_free(this.pointer);
+            LibExtism.extism_function_free(this.pointer);
             this.freed = true;
         }
     }
