@@ -45,7 +45,7 @@ public class ExtismCurrentPlugin {
         ByteBuffer bb = this.memory(offset, b.length);
 //        ptr.write(offs, b, 0, b.length); /// FIXME
         bb.put(b);
-        output.v.i64 = 0;
+        output.v.i64 = offset;
     }
 
     /**
@@ -53,8 +53,6 @@ public class ExtismCurrentPlugin {
      * @param input - The input to read
      */
     public byte[] inputBytes(LibExtism.ExtismVal input) {
-
-        // FIXME
         switch (input.t) {
             case 0: {
                 var len = LibExtism0.INSTANCE.extism_current_plugin_memory_length(this.pointer, input.v.i32);
