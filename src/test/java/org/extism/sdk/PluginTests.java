@@ -170,10 +170,9 @@ public class PluginTests {
             System.out.println("Hello from Java Host Function!");
             System.out.println(String.format("Input string received from plugin, %s", plugin.inputString(params[0])));
 
-            int offs = plugin.alloc(4);
-//            Pointer mem = plugin.memory();
-//            mem.write(offs, "test".getBytes(), 0, 4);
-            // FIXME
+            long offs = plugin.alloc(4);
+            var mem = plugin.memory(offs, 4);
+            mem.put("test".getBytes(), 0, 4);
             returns[0].v.i64 = offs;
 
             data.ifPresent(d -> System.out.println(String.format("Host user data, %s, %d", d.data1, d.data2)));
@@ -218,10 +217,9 @@ public class PluginTests {
             System.out.println("Hello from Java Host Function!");
             System.out.println(String.format("Input string received from plugin, %s", plugin.inputString(params[0])));
 
-            int offs = plugin.alloc(4);
-            // FIXME
-//            Pointer mem = plugin.memory();
-//            mem.write(offs, "test".getBytes(), 0, 4);
+            long offs = plugin.alloc(4);
+            var mem = plugin.memory(offs, 4);
+            mem.put("test".getBytes(), 0, 4);
             returns[0].v.ptr = offs;
 
             data.ifPresent(d -> System.out.println(String.format("Host user data, %s, %d", d.data1, d.data2)));
@@ -256,9 +254,9 @@ public class PluginTests {
             System.out.println("Hello from Java Host Function!");
             System.out.println(String.format("Input string received from plugin, %s", plugin.inputString(params[0])));
 
-            int offs = plugin.alloc(4);
-//            Pointer mem = plugin.memory();
-//            mem.write(offs, "test".getBytes(), 0, 4);
+            long offs = plugin.alloc(4);
+            var mem = plugin.memory(offs, 4);
+            mem.put("test".getBytes(), 0, 4);
             // FIXME
             returns[0].v.i64 = offs;
 

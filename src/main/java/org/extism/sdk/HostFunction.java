@@ -36,31 +36,22 @@ public class HostFunction<T extends HostUserData> {
         );
     }
 
-    static void convertOutput(LibExtism0.ExtismVal original, LibExtism0.ExtismVal fromHostFunction) {
-        if (fromHostFunction.t != original.t)
-            throw new ExtismException(String.format("Output type mismatch, got %d but expected %d", fromHostFunction.t, original.t));
-
-        // FIXME
-
-//        if (fromHostFunction.t == LibExtism.ExtismValType.I32.v) {
-//            original.v.setType(Integer.TYPE);
-//            original.v.i32 = fromHostFunction.v.i32;
-//        } else if (fromHostFunction.t == LibExtism.ExtismValType.I64.v) {
-//            original.v.setType(Long.TYPE);
-//            // PTR is an alias for I64
-//            if (fromHostFunction.v.i64 == 0 && fromHostFunction.v.ptr > 0) {
-//                original.v.i64 = fromHostFunction.v.ptr;
-//            } else {
-//                original.v.i64 = fromHostFunction.v.i64;
-//            }
-//        } else if (fromHostFunction.t == LibExtism.ExtismValType.F32.v) {
-//            original.v.setType(Float.TYPE);
-//            original.v.f32 = fromHostFunction.v.f32;
-//        } else if (fromHostFunction.t == LibExtism.ExtismValType.F64.v) {
-//            original.v.setType(Double.TYPE);
-//            original.v.f64 = fromHostFunction.v.f64;
-//        } else
-//            throw new ExtismException(String.format("Unsupported return type: %s", original.t));
+    static long convertOutput(LibExtism.ExtismVal original, LibExtism.ExtismValType t) {
+        if (t == LibExtism.ExtismValType.I32) {
+            return original.v.i32;
+        } else if (t == LibExtism.ExtismValType.I64 || t == LibExtism.ExtismValType.PTR) {
+            // PTR is an alias for I64
+            if (original.v.i64 == 0 && original.v.ptr > 0) {
+                return original.v.ptr;
+            } else {
+                return original.v.i64;
+            }
+        } else if (t == LibExtism.ExtismValType.F32) {
+            return Float.floatToIntBits(original.v.f32);
+        } else if (t == LibExtism.ExtismValType.F64) {
+            return Double.doubleToLongBits(original.v.f64);
+        } else
+            throw new ExtismException(String.format("Unsupported return type: %s", original.t));
     }
 
     public void setNamespace(String name) {
@@ -98,23 +89,28 @@ public class HostFunction<T extends HostUserData> {
         public void invoke(long currentPlugin, long[] ins, int nInputs, long[] outs, int nOutputs, long data) {
 
             LibExtism.ExtismVal[] inVals = new LibExtism.ExtismVal[ins.length];
-            LibExtism.ExtismVal[] outVals = new LibExtism.ExtismVal[outs.length];
+            LibExtism.ExtismVal[] outVals = null;
+            if (outs != null) {
+                outVals = new LibExtism.ExtismVal[outs.length];
+            }
 
             for (int i = 0; i < nInputs; i++) {
                 inVals[i] = convert(ins[i], params[i]);
             }
 
             for (int i = 0; i < nOutputs; i++) {
-                outVals[i] = convert(outs[i], params[i]);
+                outVals[i] = convert(outs[i], returns[i]);
             }
 
 
             // FIXME
             f.invoke(new ExtismCurrentPlugin(currentPlugin), inVals, outVals, userData);
 
-//            for (long output : outs) {
-//                convertOutput(output, output);
-//            }
+            for (int i = 0; i < outs.length; i++) {
+                var t = returns[i];
+                outs[i] = convertOutput(outVals[i], t);
+            }
+            System.out.println("outvals:"+Arrays.toString(outs));
         }
 
         static LibExtism.ExtismVal convert(long in, LibExtism.ExtismValType param) {

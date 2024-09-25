@@ -1,13 +1,15 @@
 package org.extism.sdk;
 
 
+import java.nio.ByteBuffer;
+
 /**
  * Wrapper around the Extism library.
  */
 public class LibExtism0 {
 
     static {
-        System.load(System.getProperty("user.dir")+"/rust/target/debug/libextism4j.dylib");
+        System.load("/Users/evacchi/Devel/extism/extism/target/debug/libextism.dylib");
     }
 
     /**
@@ -81,7 +83,7 @@ public class LibExtism0 {
      * Returns a pointer to the memory of the currently running plugin
      * NOTE: this should only be called from host functions.
      */
-    public native long extism_current_plugin_memory(long plugin);
+    public native ByteBuffer extism_current_plugin_memory(long plugin, long off, long size);
 
     /**
      * Allocate a memory block in the currently running plugin
@@ -123,8 +125,11 @@ public class LibExtism0 {
      * @param errmsg         get the error message if the return value is null
      * @return pointer to the plugin, or null in case of error
      */
-    public native long extism_plugin_new(byte[] wasm, long wasmSize, long[] functions, int nFunctions, boolean withWASI, long[] errmsg);
+    public native long extism_plugin_new(byte[] wasm, long wasmSize, long[] functions, int nFunctions, boolean withWASI, String[] errmsg);
     public native long extism_plugin_new_with_fuel_limit(byte[] wasm, long wasmSize, long[] functions, int nFunctions, boolean withWASI, long fuelLimit, long[] errmsg);
+
+
+    public native String extism_plugin_new_error_get(long errmsg);
 
 
     /**

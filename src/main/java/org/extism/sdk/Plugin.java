@@ -35,7 +35,7 @@ public class Plugin implements AutoCloseable {
                ptrArr[i] = functions[i].pointer;
             }
 
-        long[] errormsg = new long[1];
+        String[] errormsg = new String[1];
         long p = LibExtism0.INSTANCE.extism_plugin_new(manifestBytes, manifestBytes.length,
                 ptrArr,
                 functions == null ? 0 : functions.length,
@@ -47,10 +47,8 @@ public class Plugin implements AutoCloseable {
                     LibExtism0.INSTANCE.extism_function_free(functions[i].pointer);
                 }
             }
-//            String msg = errormsg[0].getString(0);
-            String msg = "FIXME"; //FIXME
-            LibExtism0.INSTANCE.extism_plugin_new_error_free(errormsg[0]);
-            throw new ExtismException(msg);
+//            LibExtism0.INSTANCE.extism_plugin_new_error_free();
+            throw new ExtismException(errormsg[0]);
         }
 
         this.functions = functions;
@@ -66,9 +64,7 @@ public class Plugin implements AutoCloseable {
 
         if (functions != null)
             for (int i = 0; i < functions.length; i++) {
-//               ptrArr[i] = functions[i].pointer;
-                throw new UnsupportedOperationException("FIXME");
-
+               ptrArr[i] = functions[i].pointer;
             }
 
         long[] errormsg = new long[1];
@@ -81,13 +77,11 @@ public class Plugin implements AutoCloseable {
         if (p == 0) {
             if (functions != null) {
                 for (int i = 0; i < functions.length; i++) {
-//                    LibExtism0.INSTANCE.extism_function_free(functions[i].pointer);
-                    throw new UnsupportedOperationException("FIXME");
-
+                    LibExtism0.INSTANCE.extism_function_free(functions[i].pointer);
                 }
             }
 //            String msg = errormsg[0].getString(0);
-            String msg = "FIXME"; //FIXME
+            String msg = "FIXME err init"; //FIXME
             LibExtism0.INSTANCE.extism_plugin_new_error_free(errormsg[0]);
             throw new ExtismException(msg);
         }

@@ -1,5 +1,6 @@
 package org.extism.sdk;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class ExtismCurrentPlugin {
@@ -9,11 +10,11 @@ public class ExtismCurrentPlugin {
         this.pointer = pointer;
     }
 
-    public long memory() {
-        return LibExtism0.INSTANCE.extism_current_plugin_memory(this.pointer);
+    public ByteBuffer memory(long off, long n) {
+        return LibExtism0.INSTANCE.extism_current_plugin_memory(this.pointer, off, n);
     }
 
-    public int alloc(int n) {
+    public long alloc(int n) {
         return LibExtism0.INSTANCE.extism_current_plugin_memory_alloc(this.pointer, n);
     }
 
@@ -40,10 +41,11 @@ public class ExtismCurrentPlugin {
      * @param b - The buffer to return
      */
     public void returnBytes(LibExtism.ExtismVal output, byte[] b) {
-        int offs = this.alloc(b.length);
-        long ptr = this.memory();
+        long offset = this.alloc(b.length);
+        ByteBuffer bb = this.memory(offset, b.length);
 //        ptr.write(offs, b, 0, b.length); /// FIXME
-        output.v.i64 = offs;
+        bb.put(b);
+        output.v.i64 = 0;
     }
 
     /**
@@ -51,20 +53,24 @@ public class ExtismCurrentPlugin {
      * @param input - The input to read
      */
     public byte[] inputBytes(LibExtism.ExtismVal input) {
+
         // FIXME
-        return null;
-//        switch (input.t) {
-//            case 0:
-//                return this.memory()
-//                        .getByteArray(input.v.i32,
-//                                LibExtism0.INSTANCE.extism_current_plugin_memory_length(this.pointer, input.v.i32));
-//            case 1:
-//                return this.memory()
-//                        .getByteArray(input.v.i64,
-//                                LibExtism0.INSTANCE.extism_current_plugin_memory_length(this.pointer, input.v.i64));
-//            default:
-//                throw new ExtismException("inputBytes error: ExtismValType " + LibExtism.ExtismValType.values()[input.t] + " not implemtented");
-//        }
+        switch (input.t) {
+            case 0: {
+                var len = LibExtism0.INSTANCE.extism_current_plugin_memory_length(this.pointer, input.v.i32);
+                byte[] bb = new byte[len];
+                this.memory(input.v.i32, len).get(bb);
+                return bb;
+            }
+            case 1: {
+                var len = LibExtism0.INSTANCE.extism_current_plugin_memory_length(this.pointer, input.v.i64);
+                byte[] bb = new byte[len];
+                this.memory(input.v.i64, len).get(bb);
+                return bb;
+            }
+            default:
+                throw new ExtismException("inputBytes error: ExtismValType " + LibExtism.ExtismValType.values()[input.t] + " not implemtented");
+        }
     }
 
 

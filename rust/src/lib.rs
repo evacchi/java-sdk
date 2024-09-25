@@ -1,5 +1,5 @@
 use core::slice;
-use std::{cell::OnceCell, ffi::{c_void, CStr, CString}, io::stdout, ptr::{null, null_mut}, sync::OnceLock, thread::{self, panicking}, time::Duration};
+use std::{cell::{Cell, OnceCell}, ffi::{c_void, CStr, CString}, io::stdout, ptr::{null, null_mut}, sync::OnceLock, thread::{self, panicking}, time::Duration};
 
 use extism::{sdk::{self, extism_current_plugin_memory, extism_current_plugin_memory_alloc, extism_current_plugin_memory_free, extism_current_plugin_memory_length, extism_function_free, extism_function_new, extism_plugin_call, extism_plugin_error, extism_plugin_new, extism_plugin_new_with_fuel_limit, extism_plugin_output_data, extism_plugin_output_length, ExtismFunction, ExtismFunctionType, ExtismMemoryHandle, ExtismVal, Size}, CurrentPlugin, Function, Plugin, UserData, ValType};
 use jni_simple::{ *};
@@ -34,7 +34,10 @@ pub unsafe extern "system" fn JNI_OnLoad(vm: JavaVM, _reserved: *mut c_void) -> 
     return JNI_VERSION_1_8;
 }
 
-
+struct DecoratedData{
+    callback: jobject,
+    userdata: jobject
+}
 
 
 #[no_mangle]
@@ -63,27 +66,23 @@ pub unsafe extern "system" fn Java_org_extism_sdk_LibExtism0_extism_1function_1n
       i+=1;
     }
 
-    let vm = env.GetJavaVM().unwrap();
-
-    let clazz = env.FindClass_str("org/extism/sdk/LibExtism0$InternalExtismFunction");
-    let method_id = env.GetMethodID_str(clazz, "invoke", "(J[JI[JIJ)V");
-    // env.CallVoidMethodA(callback, method_id, [].as_ptr());
-
-    // let f = Function::new(
-    //     CStr::from_ptr(env.GetStringUTFChars(name, null_mut())).to_str().unwrap(), 
-    //     ins, outs, UserData::new(user_data_ptr), |p, ins, outs, data| { Ok(()) });
 
 
-        
-    // Box::into_raw(Box::new(ExtismFunction(std::cell::Cell::new(Some(f)))))
+    let g = env.NewGlobalRef(callback);
+
+    let data = DecoratedData {
+        callback: g,
+        userdata: user_data_ptr
+    };
 
 
+    let boxed_data = Box::new(data);
 
     extism_function_new(
       env.GetStringUTFChars(name, null_mut()), 
       ins.as_mut_ptr(), n_inputs as u64, 
       outs.as_mut_ptr(), n_outputs as u64, 
-      nop, user_data_ptr as *mut std::ffi::c_void, Option::None) as jlong
+      nop, Box::into_raw(boxed_data) as *mut c_void, Option::None) as jlong
 }
 
 
@@ -109,15 +108,46 @@ extern "C"  fn nop(
   data: *mut std::ffi::c_void,
 )  {
     unsafe {
+
+
         use std::io::Write; // <--- bring the trait into scope
         let vm = jvm.get().unwrap();
         let env : JNIEnv = vm.GetEnv(JNI_VERSION_1_8).unwrap();
-        let sys = env.FindClass_str("java/lang/System");
-        let nano_time = env.GetStaticMethodID_str(sys, "nanoTime", "()J");
-        let nanos = env.CallStaticLongMethodA(sys, nano_time, null());
-        println!("RUST: JNI_OnLoad {}", nanos);
-        stdout().flush().unwrap();
+        let clazz = env.FindClass_str("org/extism/sdk/LibExtism0$InternalExtismFunction");
+        let method_id = env.GetMethodID_str(clazz, "invoke", "(J[JI[JIJ)V");
+
+        let d = data as *const DecoratedData;
+        let callback = (*d).callback;
+
+        let p: jtype = (plugin as *mut c_void).into();
+
+        let ins = slice::from_raw_parts(inputs, n_inputs as usize);
+        let outs = slice::from_raw_parts(outputs, n_outputs as usize);
+
+        env.CallVoidMethodA(callback, method_id, [p, ].as_ptr());
     }
+}
+
+unsafe fn convVal(env: JNIEnv, t: ValType, vals: &[ExtismVal]) -> jarray {
+    let sz = vals.len() as i32;
+    let arr = match t  {
+        ValType::I32 => {
+            let arr = env.NewIntArray(sz);
+            let mut i = 0;
+            let v = Vec::with_capacity(sz as usize);
+            for ele in vals {
+                vec[i] = ele.v.i32;
+                i+=1;
+            }
+        
+        }
+        ValType::I64 => env.NewLongArray(sz),
+        ValType::F32 => env.NewFloatArray(sz),
+        ValType::F64 => env.NewDoubleArray(sz),
+        _ => panic!("not yet implemented")
+    };
+
+
 }
 
 /*

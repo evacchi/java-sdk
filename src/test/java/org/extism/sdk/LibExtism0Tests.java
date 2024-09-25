@@ -19,7 +19,7 @@ class LibExtism0Tests_ {
 
     @Test
     public void test_extism_current_plugin_memory() {
-        assertEquals(0, LibExtism0.INSTANCE.extism_current_plugin_memory(100));
+        assertEquals(0, LibExtism0.INSTANCE.extism_current_plugin_memory(100, 0, 10));
     }
 
     @Test
